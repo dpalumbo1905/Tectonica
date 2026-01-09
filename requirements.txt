@@ -1,0 +1,8 @@
+streamlit
+pymupdf
+Pillow
+openai
+python-dotenv
+numpy
+streamlit-cropper
+fpdf
