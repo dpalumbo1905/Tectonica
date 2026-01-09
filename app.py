@@ -1,58 +1,42 @@
-import streamlit as st
-from streamlit_cropper import st_cropper
-from utils_vision import (
-    pdf_page_to_image, normalize_images, transform_image, 
-    create_overlay, detect_clashes_with_boxes, extract_scale_from_image, create_pdf_report
-)
-from dotenv import load_dotenv
+# Add this import at the top
+from utils_database import init_db, save_project, get_projects, teach_ai
 
-load_dotenv()
-st.set_page_config(layout="wide", page_title="Tectonica MVP")
+# Initialize DB on app launch
+init_db()
 
-if 'x_shift' not in st.session_state: st.session_state.x_shift = 0
-if 'y_shift' not in st.session_state: st.session_state.y_shift = 0
-if 'rotation' not in st.session_state: st.session_state.rotation = 0
-if 'scale_text' not in st.session_state: st.session_state.scale_text = None
-if 'final_result' not in st.session_state: st.session_state.final_result = None
+# ... (Keep existing layout code)
 
-with st.sidebar:
-    st.header("Settings")
-    trade_a = st.selectbox("Base Plan", ["Structural", "Architectural", "Mechanical", "Electrical"], index=0)
-    trade_b = st.selectbox("Overlay Plan", ["Structural", "Architectural", "Mechanical", "Electrical"], index=2)
+# IN "HOME" SECTION:
+# Change the project selector to read from DB instead of session state
+st.write("#### SELECT MISSION")
+existing_projects = get_projects() # Reads from SQLite
+if existing_projects:
+    sel_proj = st.selectbox("Active Projects", existing_projects)
+    if st.button("RESUME MISSION"):
+        create_project(sel_proj)
+        
+# IN "INITIATE NEW MISSION":
+if st.button("INITIALIZE PROJECT"):
+    save_project(new_proj) # Saves to SQLite
+    create_project(new_proj)
+
+
+# IN "ANALYSIS" TAB (The Feedback Loop):
+# After results are shown...
+if st.session_state.get('clash_data'): # If we have results
     st.divider()
-    st.write("Alignment")
-    st.session_state.y_shift = st.number_input("Y Shift", value=st.session_state.y_shift)
-    st.session_state.x_shift = st.number_input("X Shift", value=st.session_state.x_shift)
-    st.session_state.rotation = st.number_input("Rotation", value=st.session_state.rotation)
-
-st.title("Tectonica: AI Clash Detection")
-c1, c2 = st.columns(2)
-f1 = c1.file_uploader("Base Plan", type=["pdf"], key="1")
-f2 = c2.file_uploader("Overlay Plan", type=["pdf"], key="2")
-
-if f1 and f2:
-    img_a = pdf_page_to_image(f1)
-    img_b = pdf_page_to_image(f2)
-
-    if img_a and img_b:
-        img_a, img_b = normalize_images(img_a, img_b)
-
-        if st.button("Get Scale"):
-             st.session_state.scale_text = extract_scale_from_image(img_a)
-        st.caption(f"Scale: {st.session_state.scale_text}")
-
-        b_trans = transform_image(img_b, st.session_state.x_shift, st.session_state.y_shift, st.session_state.rotation)
-        overlay = create_overlay(img_a, b_trans)
-
-        st.write("### Crop Area to Analyze")
-        crop = st_cropper(overlay, realtime_update=True, box_color='blue')
-
-        if st.button("RUN DETECTION"):
-            res, data = detect_clashes_with_boxes(crop, st.session_state.scale_text, trade_a, trade_b)
-            st.session_state.final_result = res
-            st.session_state.clash_data = data
-
-        if st.session_state.final_result:
-            st.image(st.session_state.final_result)
-            pdf_bytes = create_pdf_report(st.session_state.final_result, st.session_state.clash_data)
-            st.download_button("Download Report", data=pdf_bytes, file_name="report.pdf")
+    st.markdown("### AI TRAINING FEEDBACK")
+    st.info("Teach the system to improve future accuracy.")
+    
+    for i, clash in enumerate(st.session_state.clash_data):
+        c1, c2, c3 = st.columns([3, 1, 1])
+        with c1:
+            st.write(f"**Issue {i+1}:** {clash['description']}")
+        with c2:
+            if st.button("✅ Confirm", key=f"conf_{i}"):
+                teach_ai(clash['description'], "clash")
+                st.toast("Logic Confirmed.")
+        with c3:
+            if st.button("❌ False Alarm", key=f"false_{i}"):
+                teach_ai(clash['description'], "safe")
+                st.toast("AI Updated: Will ignore similar issues next time.")
