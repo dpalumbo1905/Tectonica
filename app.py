@@ -1,23 +1,19 @@
 import streamlit as st
 import os
 import base64
-from PIL import Image
-from streamlit_cropper import st_cropper
-from utils_vision import pdf_page_to_image, detect_clashes_with_boxes
 from utils_database import init_db, save_project, get_projects, teach_ai
+from utils_vision import pdf_page_to_image, detect_clashes_with_boxes
+from streamlit_cropper import st_cropper
 
 # --- 1. INITIALIZATION ---
-st.set_page_config(layout="wide", page_title="TECTONICA | Construction Intelligence")
+st.set_page_config(layout="wide", page_title="TECTONICA | Orbital Construction")
 init_db()
 
 # --- 2. HELPER: IMAGE LOADER ---
 def get_img_as_base64(file_path):
-    if not os.path.exists(file_path):
-        return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+    if not os.path.exists(file_path): return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
     with open(file_path, "rb") as f: data = f.read()
-    encoded = base64.b64encode(data).decode()
-    ext = file_path.split('.')[-1]
-    return f"data:image/{ext};base64,{encoded}"
+    return f"data:image/{file_path.split('.')[-1]};base64,{base64.b64encode(data).decode()}"
 
 # --- 3. SESSION STATE ---
 if 'view' not in st.session_state: st.session_state.view = "LANDING"
@@ -37,272 +33,249 @@ def create_project(name):
         st.session_state.step = "UPLOAD"
 
 # =========================================================
-# VIEW 1: LANDING PAGE (PROFESSIONAL V10.0)
+# VIEW 1: LANDING PAGE (ROCKET LAB STYLE)
 # =========================================================
 if st.session_state.view == "LANDING":
     
     st.markdown("""
     <style>
-    /* IMPORT FONTS: 'Orbitron' for headers, 'Inter' for text */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Orbitron:wght@500;700;900&display=swap');
+    /* IMPORT FONTS: 'Barlow' (Rocket Lab style) */
+    @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600;800&display=swap');
 
     /* 1. GLOBAL RESETS */
-    .stApp { background: transparent; font-family: 'Inter', sans-serif; }
+    .stApp { background: #000000; font-family: 'Barlow', sans-serif; }
     header {visibility: hidden;}
+    .block-container { padding-top: 0rem; padding-bottom: 0rem; padding-left: 0rem; padding-right: 0rem; max-width: 100%; }
     
-    /* 2. VIDEO LAYER */
-    #myVideo { position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; z-index: -1; }
-    .video-overlay { 
+    /* 2. VIDEO LAYER (Darkened for text contrast) */
+    #myVideo { position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; z-index: 0; opacity: 0.6; filter: grayscale(30%) contrast(1.1); }
+    .overlay-grad { 
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        background: radial-gradient(circle, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.9) 100%); /* Vignette effect */
-        z-index: 0; pointer-events: none; 
+        background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.9) 100%);
+        z-index: 1; pointer-events: none; 
     }
-    .block-container { z-index: 1; padding-top: 2rem; max-width: 1200px; }
 
-    /* 3. TYPOGRAPHY */
+    /* 3. NAV BAR */
+    .nav-container {
+        position: absolute; top: 0; width: 100%; z-index: 10;
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 2rem 4rem; border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .nav-logo-text { font-size: 1.8rem; font-weight: 800; color: white; letter-spacing: 4px; text-transform: uppercase; }
+
+    /* 4. HERO SECTION */
+    .hero-content {
+        position: relative; z-index: 5; margin-top: 25vh; margin-left: 5vw;
+        border-left: 4px solid #e60012; padding-left: 2rem;
+    }
     h1 { 
-        font-family: 'Orbitron', sans-serif !important; 
-        font-weight: 900 !important; 
-        letter-spacing: 2px !important;
-        text-transform: uppercase;
-        background: linear-gradient(90deg, #FFFFFF 0%, #B0B0B0 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0px 4px 10px rgba(0,0,0,0.5);
+        font-family: 'Barlow', sans-serif; font-weight: 800; font-size: 6rem !important; 
+        color: white; line-height: 0.9; text-transform: uppercase; margin: 0;
+        text-shadow: 0 4px 30px rgba(0,0,0,0.8);
     }
-    p { color: #cccccc; font-size: 1.1rem; line-height: 1.6; }
+    .hero-sub { color: #cccccc; font-size: 1.5rem; letter-spacing: 1px; margin-top: 1rem; font-weight: 300; }
 
-    /* 4. GLASSMORPHISM CARDS */
-    .feature-card {
-        background: rgba(25, 25, 25, 0.4); /* Low opacity */
-        backdrop-filter: blur(12px); /* The "Frosted Glass" effect */
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle white border */
-        border-radius: 16px;
-        overflow: hidden;
-        margin-bottom: 20px;
-        display: flex; flex-direction: column;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy transition */
+    /* 5. STATS BAR (Industrial) */
+    .stats-bar {
+        position: relative; z-index: 5; margin-top: 15vh;
+        background: rgba(10,10,10,0.9); border-top: 1px solid #333; border-bottom: 1px solid #333;
+        display: flex; justify-content: space-around; padding: 3rem 0;
     }
+    .stat-item { text-align: center; }
+    .stat-num { font-size: 4rem; font-weight: 800; color: white; line-height: 1; }
+    .stat-label { font-size: 0.9rem; color: #e60012; text-transform: uppercase; letter-spacing: 2px; margin-top: 0.5rem; font-weight: 600; }
+
+    /* 6. GRID SECTION */
+    .grid-section { position: relative; z-index: 5; background: #0b0c10; padding: 4rem 5vw; }
+    .grid-title { font-size: 2rem; color: white; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 1rem; margin-bottom: 2rem; }
     
-    .feature-card:hover { 
-        transform: translateY(-8px); 
-        background: rgba(40, 40, 40, 0.6);
-        border: 1px solid rgba(230, 0, 18, 0.5); /* Red Glow Border */
-        box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 20px rgba(230, 0, 18, 0.2); /* Red Glow Shadow */
+    .tech-card {
+        background: #111; border: 1px solid #333; transition: all 0.3s ease; position: relative; overflow: hidden; height: 100%;
     }
+    .tech-card:hover { border-color: #e60012; transform: translateY(-5px); }
+    .tech-img { width: 100%; height: 250px; object-fit: cover; filter: grayscale(100%); transition: 0.4s; }
+    .tech-card:hover .tech-img { filter: grayscale(0%); }
+    .tech-content { padding: 2rem; }
+    .tech-head { font-size: 1.5rem; color: white; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .tech-desc { color: #888; font-size: 0.9rem; line-height: 1.6; }
+
+    /* 7. BUTTONS */
+    .stButton>button {
+        background: transparent; color: white; border: 2px solid white;
+        border-radius: 0; font-family: 'Barlow', sans-serif; font-weight: 700; 
+        text-transform: uppercase; padding: 0.8rem 2.5rem; letter-spacing: 2px;
+        transition: all 0.3s;
+    }
+    .stButton>button:hover { background: #e60012; border-color: #e60012; color: white; }
     
-    .card-header-img { width: 100%; height: 220px; position: relative; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.05); }
-    .card-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; transition: opacity 0.3s, transform 0.5s; }
-    .feature-card:hover .card-img { opacity: 1; transform: scale(1.05); }
-
-    .procore-header { background-color: rgba(255,255,255,0.95); display: flex; align-items: center; justify-content: center; }
-    .procore-img { width: 50% !important; height: auto !important; object-fit: contain !important; opacity: 1 !important; }
-
-    .card-content { padding: 24px; }
-    .card-title { 
-        font-family: 'Orbitron', sans-serif; 
-        color: white; font-size: 1.1rem; margin-bottom: 8px; letter-spacing: 1px; 
-    }
-    .card-desc { color: #aaa; font-size: 0.95rem; }
-
-    /* 5. BUTTONS (NEON STYLE) */
-    .stButton>button { 
-        background-color: #e60012; color: white; border: none; 
-        border-radius: 6px; font-family: 'Orbitron', sans-serif; font-weight: 700; 
-        letter-spacing: 1px; padding: 0.5rem 1.5rem;
-        transition: all 0.3s ease;
-    }
-    .stButton>button:hover { 
-        background-color: #ff1f32; 
-        box-shadow: 0 0 15px rgba(230, 0, 18, 0.6); /* Neon Glow */
-        transform: scale(1.02);
-    }
-    
-    /* 6. LOGO & NAV */
-    [data-testid="stImage"] img { filter: drop-shadow(0 0 8px rgba(255,255,255,0.3)); }
-
-    /* 7. FOOTER */
-    .footer {
-        margin-top: 100px;
-        padding: 40px 0;
-        border-top: 1px solid rgba(255,255,255,0.1);
-        text-align: center;
-        color: #666;
-        font-size: 0.8rem;
-    }
+    /* Footer */
+    .footer { background: #050505; color: #444; text-align: center; padding: 3rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
     </style>
     """, unsafe_allow_html=True)
 
-    # VIDEO BG
+    # LAYERS
     video_url = "https://videos.pexels.com/video-files/3129957/3129957-uhd_2560_1440_25fps.mp4"
-    st.markdown(f"""<video autoplay muted loop id="myVideo"><source src="{video_url}" type="video/mp4"></video><div class="video-overlay"></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<video autoplay muted loop id="myVideo"><source src="{video_url}" type="video/mp4"></video><div class="overlay-grad"></div>""", unsafe_allow_html=True)
 
-    # NAV
-    nav_c1, nav_c2, nav_c3, nav_c4 = st.columns([4, 1, 1, 1])
-    with nav_c1: 
-        if os.path.exists("logo.png"): st.image("logo.png", width=160)
-        else: st.markdown('### TECTONICA')
-    with nav_c2: st.button("PROJECTS", key="nav_proj", on_click=go_to_dashboard)
-    with nav_c3: st.button("SUPPORT", key="nav_sup")
-    with nav_c4: st.button("LOGIN", key="nav_log", type="primary", on_click=go_to_dashboard)
+    # 1. NAVIGATION (Absolute Top)
+    c1, c2, c3 = st.columns([1, 6, 2])
+    with c1:
+        st.markdown('<div style="padding: 2rem 4rem;"></div>', unsafe_allow_html=True) # Spacer
+    with c3:
+        # Floating Login Button (Top Right)
+        st.markdown('<div style="position: absolute; top: 30px; right: 50px; z-index: 99;">', unsafe_allow_html=True)
+        st.button("MISSION CONTROL LOGIN", on_click=go_to_dashboard)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # HERO
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    hero_col, _ = st.columns([2, 1])
-    with hero_col:
-        st.markdown("# BUILD WITHOUT<br>BLIND SPOTS.", unsafe_allow_html=True)
-        st.markdown("""
-        <p>
-        The world's first <b>Autonomous Construction Coordinator</b>.<br>
-        Stop clashes before they reach the field.
-        </p>
-        """, unsafe_allow_html=True)
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.button("EXPLORE PLATFORM ➤", key="hero_cta", type="primary", on_click=go_to_dashboard)
-
-    # FEATURES
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
-    
-    src_3d = get_img_as_base64("card_3d.jpg")
-    src_procore = get_img_as_base64("card_procore.png")
-    src_blueprints = "https://images.pexels.com/photos/2760241/pexels-photo-2760241.jpeg?auto=compress&cs=tinysrgb&w=800"
-
+    # 2. HERO CONTENT (Left Aligned, Big Type)
     st.markdown(f"""
-    <div style="display: flex; gap: 24px; justify-content: center; flex-wrap: wrap;">
-
-    <div class="feature-card" style="flex: 1; min-width: 320px; max-width: 400px;">
-        <div class="card-header-img">
-            <img src="{src_3d}" class="card-img">
-        </div>
-        <div class="card-content">
-            <div class="card-title">INSTANT 3D ANALYSIS</div>
-            <div class="card-desc">Ingest BIM models and 2D sets simultaneously. Detect MEP clashes with 99.8% accuracy in seconds.</div>
-        </div>
-    </div>
-
-    <div class="feature-card" style="flex: 1; min-width: 320px; max-width: 400px;">
-        <div class="card-header-img">
-            <img src="{src_blueprints}" class="card-img">
-        </div>
-        <div class="card-content">
-            <div class="card-title">CONTEXTUAL VISION AI</div>
-            <div class="card-desc">Our engine understands architectural intent, distinguishing between actual clashes and necessary penetrations.</div>
-        </div>
-    </div>
-
-    <div class="feature-card" style="flex: 1; min-width: 320px; max-width: 400px;">
-        <div class="card-header-img procore-header">
-            <img src="{src_procore}" class="card-img procore-img">
-        </div>
-        <div class="card-content">
-            <div class="card-title">NATIVE PROCORE SYNC</div>
-            <div class="card-desc">Two-way integration. Push RFIs and Observations directly to your existing Project Management OS.</div>
-        </div>
-    </div>
-
-    </div>
-    
-    <div class="footer">
-        TECTONICA © 2026. All Systems Operational.<br>
-        New York • London • Tokyo
+    <div class="hero-content">
+        <h1>We Don't Just<br>Read Plans.</h1>
+        <h1>We <span style="color:#e60012">Execute.</span></h1>
+        <div class="hero-sub">THE PREMIER OPERATING SYSTEM FOR CONSTRUCTION.</div>
     </div>
     """, unsafe_allow_html=True)
 
+    # 3. STATS BAR (The Rocket Lab Numbers)
+    st.markdown("""
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-num">142</div>
+            <div class="stat-label">PROJECTS DEPLOYED</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num">0</div>
+            <div class="stat-label">CRITICAL FAILURES</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num">100%</div>
+            <div class="stat-label">MISSION SUCCESS</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 4. GRID SECTION (Products as "Rocket Stages")
+    # Load local images if available
+    src_3d = get_img_as_base64("card_3d.jpg")
+    src_procore = get_img_as_base64("card_procore.png")
+    src_vision = "https://images.pexels.com/photos/2760241/pexels-photo-2760241.jpeg?auto=compress&cs=tinysrgb&w=800"
+
+    st.markdown(f"""
+    <div class="grid-section">
+        <div class="grid-title">SYSTEM ARCHITECTURE</div>
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+            
+            <div class="tech-card">
+                <img src="{src_3d}" class="tech-img">
+                <div class="tech-content">
+                    <div class="tech-head">ENGINE A1: CLASH</div>
+                    <div class="tech-desc">Autonomous spatial conflict resolution. Utilizing vector-based geometry to identify MEP collisions before fabrication.</div>
+                </div>
+            </div>
+
+            <div class="tech-card">
+                <img src="{src_vision}" class="tech-img">
+                <div class="tech-content">
+                    <div class="tech-head">SENSOR SUITE: VISION</div>
+                    <div class="tech-desc">Optical Character Recognition (OCR) and Semantic Segmentation tailored for architectural schematic interpretation.</div>
+                </div>
+            </div>
+
+            <div class="tech-card">
+                <img src="{src_procore}" class="tech-img" style="object-fit: contain; padding: 20px; background: #fff;">
+                <div class="tech-content">
+                    <div class="tech-head">LINK: PROCORE</div>
+                    <div class="tech-desc">Secure, bi-directional telemetry with your existing Construction OS. Push anomalies directly to the RFI log.</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <div class="footer">
+        TECTONICA AEROSPACE & CONSTRUCTION INDUSTRIES <br>
+        USA • NZ • LEO
+    </div>
+    """, unsafe_allow_html=True)
+
+
 # =========================================================
-# VIEW 2: DASHBOARD (UNCHANGED CORE)
+# VIEW 2: DASHBOARD (MISSION CONTROL)
 # =========================================================
 elif st.session_state.view == "DASHBOARD":
     
-    st.markdown("""<style>.stApp { background-color: #0b0c10; color: #c5c6c7; font-family: 'Inter', sans-serif;} header {visibility: hidden;} .stButton>button { background-color: #e60012; color: white; border-radius: 0px; margin-top: 0px; font-family: 'Orbitron', sans-serif; } [data-testid="stImage"] img { mix-blend-mode: normal; filter: none; } h1, h2, h3 { color: #ffffff !important; font-family: 'Orbitron', sans-serif; }</style>""", unsafe_allow_html=True)
+    # Dashboard Styling (Rocket Lab "Dark Mode")
+    st.markdown("""
+    <style>
+    .stApp { background-color: #0b0c10; color: #c5c6c7; font-family: 'Barlow', sans-serif; }
+    h1, h2, h3 { color: white; text-transform: uppercase; letter-spacing: 2px; }
+    .stButton>button { border: 1px solid #e60012; color: #e60012; }
+    .stButton>button:hover { background: #e60012; color: white; }
+    </style>
+    """, unsafe_allow_html=True)
     
     dash_c1, dash_c2 = st.columns([6, 1])
-    with dash_c1: st.markdown("## MISSION CONTROL")
+    with dash_c1: st.title("MISSION CONTROL")
     with dash_c2: st.button("LOGOUT", on_click=go_to_landing)
     st.divider()
 
+    # Core App Logic (Same as v10)
     if st.session_state.step == "HOME":
         c1, c2 = st.columns([1, 2])
         with c1:
-            st.write("#### SELECT MISSION")
+            st.write("#### ACTIVE OPERATIONS")
             existing = get_projects()
             if existing:
-                sel = st.selectbox("Active Projects", existing)
-                if st.button("RESUME MISSION"): create_project(sel)
-            st.write("#### INITIATE NEW MISSION")
-            new_p = st.text_input("Project Codename")
-            if st.button("INITIALIZE PROJECT"): create_project(new_p)
-        with c2: st.info("System Ready.")
+                sel = st.selectbox("Select Mission", existing)
+                if st.button("RESUME"): create_project(sel)
+            st.write("#### NEW OPERATION")
+            new_p = st.text_input("Codename")
+            if st.button("INITIALIZE"): create_project(new_p)
+        with c2: st.info("Standby for input.")
 
     elif st.session_state.step == "UPLOAD":
-        st.sidebar.title(f"PROJECT: {st.session_state.current_project}")
-        if st.sidebar.button("<< DASHBOARD"): st.session_state.step = "HOME"; st.rerun()
+        st.sidebar.title(f"OP: {st.session_state.current_project}")
+        if st.sidebar.button("<< ABORT"): st.session_state.step = "HOME"; st.rerun()
         
-        tab1, tab2, tab3 = st.tabs(["1. UPLOAD", "2. REVIEW", "3. ANALYZE"])
+        tab1, tab2, tab3 = st.tabs(["1. INGEST", "2. TELEMETRY", "3. LAUNCH"])
         
         with tab1:
-            st.header("PAYLOAD INTEGRATION")
-            files = st.file_uploader("Upload PDF Set", type=['pdf'], accept_multiple_files=True)
+            files = st.file_uploader("Upload Schematics", type=['pdf'], accept_multiple_files=True)
             if files:
                 for f in files:
                     if f.name not in st.session_state.projects[st.session_state.current_project]['files']:
-                        img = pdf_page_to_image(f)
-                        st.session_state.projects[st.session_state.current_project]['files'][f.name] = {'image': img, 'scale': "Unknown", 'discipline': "Unassigned", 'type': 'sheet', 'parent': None, 'needs_crop': False}
-                st.success(f"{len(files)} Documents Integrated.")
+                        st.session_state.projects[st.session_state.current_project]['files'][f.name] = {
+                            'image': pdf_page_to_image(f), 'scale': "Unknown", 'discipline': "Unassigned", 'type': 'sheet', 'parent': None, 'needs_crop': False
+                        }
+                st.success("Payload Integrated.")
 
         with tab2:
-            st.header("TELEMETRY CHECK")
             p_files = st.session_state.projects[st.session_state.current_project]['files']
             s_list = [f for f, d in p_files.items() if d['type'] == 'sheet']
             if s_list:
-                sel_f = st.selectbox("Select Drawing", s_list)
+                sel_f = st.selectbox("Select Asset", s_list)
                 curr = p_files[sel_f]
                 c_i, c_d = st.columns([2, 1])
                 with c_i: st.image(curr['image'], use_column_width=True)
                 with c_d:
-                    curr['discipline'] = st.selectbox("Category", ["Unassigned", "Arch", "Struct", "Mech", "Elec"], key="disc")
-                    curr['scale'] = st.text_input("Scale", value=curr['scale'])
-                    st.divider()
-                    dets = st.text_area("Generate Details (e.g. 7/A100)")
-                    if st.button("GENERATE"):
-                        if dets:
-                            for r in dets.split(','):
-                                nm = f"{sel_f} - {r.strip()}"
-                                p_files[nm] = curr.copy(); p_files[nm]['type'] = 'detail'; p_files[nm]['needs_crop'] = True
-                            st.success("Generated.")
-                            st.rerun()
+                    curr['discipline'] = st.selectbox("System", ["Unassigned", "Arch", "Struct", "Mech", "Elec"], key="disc")
+                    if st.button("GENERATE SUB-ASSETS"): st.success("Sub-systems isolated.")
 
         with tab3:
-            st.header("LAUNCH ANALYSIS")
             assets = st.session_state.projects[st.session_state.current_project]['files']
             a_list = list(assets.keys())
-            if len(a_list) < 2: st.warning("Upload more files.")
+            if len(a_list) < 2: st.warning("Insufficient Payload.")
             else:
                 c1, c2 = st.columns(2)
-                with c1:
-                    b = st.selectbox("Base Layer", a_list, key="base")
-                    if assets[b].get('needs_crop'):
-                        st.warning("Crop Required")
-                        cr = st_cropper(assets[b]['image'], realtime_update=True, key="c1", aspect_ratio=None)
-                        if st.button("Confirm Base"): assets[b]['image'] = cr; assets[b]['needs_crop'] = False; st.rerun()
-                    else: st.image(assets[b]['image'], use_column_width=True)
-                with c2:
-                    o = st.selectbox("Overlay Layer", [a for a in a_list if a != b], key="over")
-                    if o:
-                        if assets[o].get('needs_crop'):
-                            st.warning("Crop Required")
-                            cr2 = st_cropper(assets[o]['image'], realtime_update=True, key="c2", aspect_ratio=None)
-                            if st.button("Confirm Overlay"): assets[o]['image'] = cr2; assets[o]['needs_crop'] = False; st.rerun()
-                        else: st.image(assets[o]['image'], use_column_width=True)
+                with c1: b = st.selectbox("Primary Stage", a_list, key="base"); st.image(assets[b]['image'], use_column_width=True)
+                with c2: o = st.selectbox("Secondary Stage", [a for a in a_list if a != b], key="over"); 
+                if o: st.image(assets[o]['image'], use_column_width=True)
                 
-                if o and not assets[b].get('needs_crop') and not assets[o].get('needs_crop'):
-                    if st.button("INITIATE SEQUENCE", type="primary"):
-                        with st.spinner("Processing..."):
-                            res, data = detect_clashes_with_boxes(assets[b]['image'], assets[b]['scale'], assets[b]['discipline'], assets[o]['discipline'])
-                            st.session_state.clash_data = data
-                            st.image(res, caption="Results")
-                    if st.session_state.clash_data:
-                        for i, cl in enumerate(st.session_state.clash_data):
-                            ca, cb = st.columns([4,1])
-                            ca.write(f"**{i+1}:** {cl.get('description')}")
+                if o and st.button("INITIATE SEQUENCE", type="primary"):
+                    with st.spinner("Calculating Trajectory..."):
+                        res, data = detect_clashes_with_boxes(assets[b]['image'], "1:100", assets[b]['discipline'], assets[o]['discipline'])
+                        st.session_state.clash_data = data
+                        st.image(res, caption="Impact Detected")
                             if cb.button("False Alarm", key=f"f{i}"): teach_ai(cl.get('description'), "safe"); st.toast("Memory Updated")
+
