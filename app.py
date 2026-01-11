@@ -11,8 +11,10 @@ init_db()
 
 # --- 2. HELPER: IMAGE LOADER ---
 def get_img_as_base64(file_path):
-    if not os.path.exists(file_path): return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
-    with open(file_path, "rb") as f: data = f.read()
+    if not os.path.exists(file_path): 
+        return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+    with open(file_path, "rb") as f: 
+        data = f.read()
     return f"data:image/{file_path.split('.')[-1]};base64,{base64.b64encode(data).decode()}"
 
 # --- 3. SESSION STATE ---
@@ -23,12 +25,17 @@ if 'step' not in st.session_state: st.session_state.step = "HOME"
 if 'clash_data' not in st.session_state: st.session_state.clash_data = None
 
 # --- 4. NAVIGATION ---
-def go_to_dashboard(): st.session_state.view = "DASHBOARD"
-def go_to_landing(): st.session_state.view = "LANDING"
+def go_to_dashboard(): 
+    st.session_state.view = "DASHBOARD"
+
+def go_to_landing(): 
+    st.session_state.view = "LANDING"
+
 def create_project(name):
     if name:
         save_project(name)
-        if name not in st.session_state.projects: st.session_state.projects[name] = {'files': {}}
+        if name not in st.session_state.projects: 
+            st.session_state.projects[name] = {'files': {}}
         st.session_state.current_project = name
         st.session_state.step = "UPLOAD"
 
@@ -220,7 +227,7 @@ elif st.session_state.view == "DASHBOARD":
     with dash_c2: st.button("LOGOUT", on_click=go_to_landing)
     st.divider()
 
-    # Core App Logic (Same as v10)
+    # Core App Logic (Expanded for Safety)
     if st.session_state.step == "HOME":
         c1, c2 = st.columns([1, 2])
         with c1:
@@ -228,15 +235,20 @@ elif st.session_state.view == "DASHBOARD":
             existing = get_projects()
             if existing:
                 sel = st.selectbox("Select Mission", existing)
-                if st.button("RESUME"): create_project(sel)
+                if st.button("RESUME"): 
+                    create_project(sel)
             st.write("#### NEW OPERATION")
             new_p = st.text_input("Codename")
-            if st.button("INITIALIZE"): create_project(new_p)
-        with c2: st.info("Standby for input.")
+            if st.button("INITIALIZE"): 
+                create_project(new_p)
+        with c2: 
+            st.info("Standby for input.")
 
     elif st.session_state.step == "UPLOAD":
         st.sidebar.title(f"OP: {st.session_state.current_project}")
-        if st.sidebar.button("<< ABORT"): st.session_state.step = "HOME"; st.rerun()
+        if st.sidebar.button("<< ABORT"): 
+            st.session_state.step = "HOME"
+            st.rerun()
         
         tab1, tab2, tab3 = st.tabs(["1. INGEST", "2. TELEMETRY", "3. LAUNCH"])
         
@@ -246,7 +258,12 @@ elif st.session_state.view == "DASHBOARD":
                 for f in files:
                     if f.name not in st.session_state.projects[st.session_state.current_project]['files']:
                         st.session_state.projects[st.session_state.current_project]['files'][f.name] = {
-                            'image': pdf_page_to_image(f), 'scale': "Unknown", 'discipline': "Unassigned", 'type': 'sheet', 'parent': None, 'needs_crop': False
+                            'image': pdf_page_to_image(f), 
+                            'scale': "Unknown", 
+                            'discipline': "Unassigned", 
+                            'type': 'sheet', 
+                            'parent': None, 
+                            'needs_crop': False
                         }
                 st.success("Payload Integrated.")
 
@@ -257,25 +274,31 @@ elif st.session_state.view == "DASHBOARD":
                 sel_f = st.selectbox("Select Asset", s_list)
                 curr = p_files[sel_f]
                 c_i, c_d = st.columns([2, 1])
-                with c_i: st.image(curr['image'], use_column_width=True)
+                with c_i: 
+                    st.image(curr['image'], use_column_width=True)
                 with c_d:
                     curr['discipline'] = st.selectbox("System", ["Unassigned", "Arch", "Struct", "Mech", "Elec"], key="disc")
-                    if st.button("GENERATE SUB-ASSETS"): st.success("Sub-systems isolated.")
+                    if st.button("GENERATE SUB-ASSETS"): 
+                        st.success("Sub-systems isolated.")
 
         with tab3:
             assets = st.session_state.projects[st.session_state.current_project]['files']
             a_list = list(assets.keys())
-            if len(a_list) < 2: st.warning("Insufficient Payload.")
+            if len(a_list) < 2: 
+                st.warning("Insufficient Payload.")
             else:
                 c1, c2 = st.columns(2)
-                with c1: b = st.selectbox("Primary Stage", a_list, key="base"); st.image(assets[b]['image'], use_column_width=True)
-                with c2: o = st.selectbox("Secondary Stage", [a for a in a_list if a != b], key="over"); 
-                if o: st.image(assets[o]['image'], use_column_width=True)
+                with c1: 
+                    b = st.selectbox("Primary Stage", a_list, key="base")
+                    st.image(assets[b]['image'], use_column_width=True)
+                with c2: 
+                    o = st.selectbox("Secondary Stage", [a for a in a_list if a != b], key="over") 
+                
+                if o: 
+                    st.image(assets[o]['image'], use_column_width=True)
                 
                 if o and st.button("INITIATE SEQUENCE", type="primary"):
                     with st.spinner("Calculating Trajectory..."):
                         res, data = detect_clashes_with_boxes(assets[b]['image'], "1:100", assets[b]['discipline'], assets[o]['discipline'])
                         st.session_state.clash_data = data
                         st.image(res, caption="Impact Detected")
-                            if cb.button("False Alarm", key=f"f{i}"): teach_ai(cl.get('description'), "safe"); st.toast("Memory Updated")
-
