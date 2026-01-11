@@ -46,7 +46,7 @@ if st.session_state.view == "LANDING":
     
     st.markdown("""
     <style>
-    /* IMPORT FONTS: 'Barlow' (Rocket Lab style) */
+    /* IMPORT FONTS: 'Barlow' */
     @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600;800&display=swap');
 
     /* 1. GLOBAL RESETS */
@@ -54,7 +54,7 @@ if st.session_state.view == "LANDING":
     header {visibility: hidden;}
     .block-container { padding-top: 0rem; padding-bottom: 0rem; padding-left: 0rem; padding-right: 0rem; max-width: 100%; }
     
-    /* 2. VIDEO LAYER (Darkened for text contrast) */
+    /* 2. VIDEO LAYER */
     #myVideo { position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; z-index: 0; opacity: 0.6; filter: grayscale(30%) contrast(1.1); }
     .overlay-grad { 
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
@@ -68,7 +68,6 @@ if st.session_state.view == "LANDING":
         display: flex; justify-content: space-between; align-items: center;
         padding: 2rem 4rem; border-bottom: 1px solid rgba(255,255,255,0.1);
     }
-    .nav-logo-text { font-size: 1.8rem; font-weight: 800; color: white; letter-spacing: 4px; text-transform: uppercase; }
 
     /* 4. HERO SECTION */
     .hero-content {
@@ -82,7 +81,7 @@ if st.session_state.view == "LANDING":
     }
     .hero-sub { color: #cccccc; font-size: 1.5rem; letter-spacing: 1px; margin-top: 1rem; font-weight: 300; }
 
-    /* 5. STATS BAR (Industrial) */
+    /* 5. STATS BAR */
     .stats-bar {
         position: relative; z-index: 5; margin-top: 15vh;
         background: rgba(10,10,10,0.9); border-top: 1px solid #333; border-bottom: 1px solid #333;
@@ -124,17 +123,16 @@ if st.session_state.view == "LANDING":
     video_url = "https://videos.pexels.com/video-files/3129957/3129957-uhd_2560_1440_25fps.mp4"
     st.markdown(f"""<video autoplay muted loop id="myVideo"><source src="{video_url}" type="video/mp4"></video><div class="overlay-grad"></div>""", unsafe_allow_html=True)
 
-    # 1. NAVIGATION (Absolute Top)
+    # 1. NAVIGATION
     c1, c2, c3 = st.columns([1, 6, 2])
     with c1:
-        st.markdown('<div style="padding: 2rem 4rem;"></div>', unsafe_allow_html=True) # Spacer
+        st.markdown('<div style="padding: 2rem 4rem;"></div>', unsafe_allow_html=True) 
     with c3:
-        # Floating Login Button (Top Right)
         st.markdown('<div style="position: absolute; top: 30px; right: 50px; z-index: 99;">', unsafe_allow_html=True)
         st.button("MISSION CONTROL LOGIN", on_click=go_to_dashboard)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # 2. HERO CONTENT (Left Aligned, Big Type)
+    # 2. HERO CONTENT
     st.markdown(f"""
     <div class="hero-content">
         <h1>We Don't Just<br>Read Plans.</h1>
@@ -143,7 +141,7 @@ if st.session_state.view == "LANDING":
     </div>
     """, unsafe_allow_html=True)
 
-    # 3. STATS BAR (The Rocket Lab Numbers)
+    # 3. STATS BAR
     st.markdown("""
     <div class="stats-bar">
         <div class="stat-item">
@@ -161,50 +159,47 @@ if st.session_state.view == "LANDING":
     </div>
     """, unsafe_allow_html=True)
 
-    # 4. GRID SECTION (Products as "Rocket Stages")
-    # Load local images if available
+    # 4. GRID SECTION (DEDENTED TO FIX CODE BLOCK ERROR)
     src_3d = get_img_as_base64("card_3d.jpg")
     src_procore = get_img_as_base64("card_procore.png")
     src_vision = "https://images.pexels.com/photos/2760241/pexels-photo-2760241.jpeg?auto=compress&cs=tinysrgb&w=800"
 
     st.markdown(f"""
-    <div class="grid-section">
-        <div class="grid-title">SYSTEM ARCHITECTURE</div>
-        
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
-            
-            <div class="tech-card">
-                <img src="{src_3d}" class="tech-img">
-                <div class="tech-content">
-                    <div class="tech-head">ENGINE A1: CLASH</div>
-                    <div class="tech-desc">Autonomous spatial conflict resolution. Utilizing vector-based geometry to identify MEP collisions before fabrication.</div>
-                </div>
-            </div>
+<div class="grid-section">
+<div class="grid-title">SYSTEM ARCHITECTURE</div>
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
 
-            <div class="tech-card">
-                <img src="{src_vision}" class="tech-img">
-                <div class="tech-content">
-                    <div class="tech-head">SENSOR SUITE: VISION</div>
-                    <div class="tech-desc">Optical Character Recognition (OCR) and Semantic Segmentation tailored for architectural schematic interpretation.</div>
-                </div>
-            </div>
+<div class="tech-card">
+<img src="{src_3d}" class="tech-img">
+<div class="tech-content">
+<div class="tech-head">ENGINE A1: CLASH</div>
+<div class="tech-desc">Autonomous spatial conflict resolution. Utilizing vector-based geometry to identify MEP collisions before fabrication.</div>
+</div>
+</div>
 
-            <div class="tech-card">
-                <img src="{src_procore}" class="tech-img" style="object-fit: contain; padding: 20px; background: #fff;">
-                <div class="tech-content">
-                    <div class="tech-head">LINK: PROCORE</div>
-                    <div class="tech-desc">Secure, bi-directional telemetry with your existing Construction OS. Push anomalies directly to the RFI log.</div>
-                </div>
-            </div>
+<div class="tech-card">
+<img src="{src_vision}" class="tech-img">
+<div class="tech-content">
+<div class="tech-head">SENSOR SUITE: VISION</div>
+<div class="tech-desc">Optical Character Recognition (OCR) and Semantic Segmentation tailored for architectural schematic interpretation.</div>
+</div>
+</div>
 
-        </div>
-    </div>
-    
-    <div class="footer">
-        TECTONICA AEROSPACE & CONSTRUCTION INDUSTRIES <br>
-        USA • NZ • LEO
-    </div>
-    """, unsafe_allow_html=True)
+<div class="tech-card">
+<img src="{src_procore}" class="tech-img" style="object-fit: contain; padding: 20px; background: #fff;">
+<div class="tech-content">
+<div class="tech-head">LINK: PROCORE</div>
+<div class="tech-desc">Secure, bi-directional telemetry with your existing Construction OS. Push anomalies directly to the RFI log.</div>
+</div>
+</div>
+
+</div>
+</div>
+<div class="footer">
+TECTONICA AEROSPACE & CONSTRUCTION INDUSTRIES <br>
+USA • NZ • LEO
+</div>
+""", unsafe_allow_html=True)
 
 
 # =========================================================
@@ -212,7 +207,6 @@ if st.session_state.view == "LANDING":
 # =========================================================
 elif st.session_state.view == "DASHBOARD":
     
-    # Dashboard Styling (Rocket Lab "Dark Mode")
     st.markdown("""
     <style>
     .stApp { background-color: #0b0c10; color: #c5c6c7; font-family: 'Barlow', sans-serif; }
@@ -227,7 +221,6 @@ elif st.session_state.view == "DASHBOARD":
     with dash_c2: st.button("LOGOUT", on_click=go_to_landing)
     st.divider()
 
-    # Core App Logic (Expanded for Safety)
     if st.session_state.step == "HOME":
         c1, c2 = st.columns([1, 2])
         with c1:
