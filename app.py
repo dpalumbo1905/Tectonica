@@ -10,23 +10,22 @@ from utils_vision import pdf_page_to_image, detect_clashes_with_boxes
 from streamlit_cropper import st_cropper
 
 # --- 1. CONFIGURATION & SETUP ---
-st.set_page_config(layout="wide", page_title="TECTONICA | Orbital Construction")
+st.set_page_config(layout="wide", page_title="TECTONICA | Advanced Construction Intelligence")
 init_db()
 
-# Create Local Storage Directory (Step 4: Persistence)
+# Create Local Storage Directory
 STORAGE_DIR = "project_storage"
 if not os.path.exists(STORAGE_DIR):
     os.makedirs(STORAGE_DIR)
 
-# --- 2. AUTHENTICATION ENGINE (Step 1: Security) ---
+# --- 2. AUTHENTICATION ENGINE ---
 def check_auth():
-    """Simple Gatekeeper System"""
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
     return st.session_state.authenticated
 
 def login(username, password):
-    # In a real app, this would check a secure database hash
+    # Default Demo Credentials
     if username == "admin" and password == "tectonica":
         st.session_state.authenticated = True
         return True
@@ -36,11 +35,11 @@ def logout():
     st.session_state.authenticated = False
     st.session_state.view = "LANDING"
 
-# --- 3. REPORTING ENGINE (Step 2: PDF Export) ---
+# --- 3. REPORTING ENGINE ---
 class ReportPDF(FPDF):
     def header(self):
         self.set_font('Arial', 'B', 15)
-        self.cell(0, 10, 'TECTONICA | MISSION CLASH REPORT', 0, 1, 'C')
+        self.cell(0, 10, 'TECTONICA | CLASH DETECTION REPORT', 0, 1, 'C')
         self.ln(5)
 
     def footer(self):
@@ -56,7 +55,7 @@ def generate_pdf_report(project_name, clash_data):
     # Meta Data
     pdf.cell(200, 10, txt=f"Project: {project_name}", ln=1, align='L')
     pdf.cell(200, 10, txt=f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=1, align='L')
-    pdf.cell(200, 10, txt=f"Total Anomalies Detected: {len(clash_data)}", ln=1, align='L')
+    pdf.cell(200, 10, txt=f"Total Clashes Detected: {len(clash_data)}", ln=1, align='L')
     pdf.ln(10)
     
     # Clash Details
@@ -69,8 +68,7 @@ def generate_pdf_report(project_name, clash_data):
         pdf.multi_cell(0, 10, txt=f"#{i+1}: {desc}")
         pdf.ln(2)
         
-    # Save to temp path
-    file_name = f"report_{int(time.time())}.pdf"
+    file_name = f"clash_report_{int(time.time())}.pdf"
     pdf.output(file_name)
     return file_name
 
@@ -106,18 +104,17 @@ def render_navbar():
     c1, c2, c3, c4, c5, c6, c7 = st.columns([2, 1, 1, 1, 1, 1, 1])
     with c1: 
         if st.button("TECTONICA", key="home_btn"): nav_to("LANDING"); st.rerun()
-    with c2: st.button("STORY", on_click=lambda: nav_to("STORY"))
-    with c3: st.button("EXPERIENCES", on_click=lambda: nav_to("REVIEWS"))
+    with c2: st.button("OUR STORY", on_click=lambda: nav_to("STORY"))
+    with c3: st.button("CASE STUDIES", on_click=lambda: nav_to("REVIEWS"))
     with c4: st.button("CAREERS", on_click=lambda: nav_to("CAREERS"))
     with c5: st.button("SUPPORT", on_click=lambda: nav_to("SUPPORT"))
     with c6: st.button("MY PROJECTS", on_click=lambda: nav_to("DASHBOARD"))
     with c7: 
         st.markdown('<div class="login-btn">', unsafe_allow_html=True)
-        # Dynamic Button: Show "LOGOUT" if logged in, else "ACCESS"
         if check_auth():
             st.button("LOGOUT", on_click=logout)
         else:
-            st.button("ACCESS / LOGIN", on_click=lambda: nav_to("LOGIN"))
+            st.button("LOGIN / SIGN UP", on_click=lambda: nav_to("LOGIN"))
         st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
@@ -138,6 +135,8 @@ h1, h2, h3 { font-family: 'Barlow', sans-serif; text-transform: uppercase; color
 # =========================================================
 if st.session_state.view == "LANDING":
     render_navbar()
+    
+    # VIDEO BACKGROUND
     video_url = "https://videos.pexels.com/video-files/3129957/3129957-uhd_2560_1440_25fps.mp4"
     st.markdown(f"""
     <style>
@@ -150,8 +149,65 @@ if st.session_state.view == "LANDING":
     st.markdown("<br><br>", unsafe_allow_html=True)
     c1, c2 = st.columns([2, 1])
     with c1:
-        st.markdown("""<h1 style='font-size: 5rem; line-height: 0.9;'>BUILD WITHOUT<br><span style='color:#e60012'>BLIND SPOTS.</span></h1><p style='font-size: 1.5rem; color: #ccc; margin-top: 1rem;'>The Autonomous Construction Coordinator.</p>""", unsafe_allow_html=True)
-        st.button("INITIATE SEQUENCE ➤", type="primary", on_click=lambda: nav_to("LOGIN"))
+        st.markdown("""
+        <h1 style='font-size: 5rem; line-height: 0.9;'>BUILD WITHOUT<br><span style='color:#e60012'>BLIND SPOTS.</span></h1>
+        <p style='font-size: 1.5rem; color: #ccc; margin-top: 1rem;'>The Future of Construction Technology.</p>
+        """, unsafe_allow_html=True)
+        st.button("ENTER PLATFORM ➤", type="primary", on_click=lambda: nav_to("LOGIN"))
+        
+    # --- INDUSTRIAL FEATURE GRID (The Rocket Lab Style layout, construction text) ---
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    
+    # Load images
+    src_3d = get_img_as_base64("card_3d.jpg")
+    src_procore = get_img_as_base64("card_procore.png")
+    src_vision = "https://images.pexels.com/photos/2760241/pexels-photo-2760241.jpeg?auto=compress&cs=tinysrgb&w=800"
+
+    # CSS for cards
+    st.markdown("""
+    <style>
+    .tech-card { background: #111; border: 1px solid #333; transition: all 0.3s ease; overflow: hidden; height: 100%; }
+    .tech-card:hover { border-color: #e60012; transform: translateY(-5px); }
+    .tech-img { width: 100%; height: 250px; object-fit: cover; filter: grayscale(100%); transition: 0.4s; }
+    .tech-card:hover .tech-img { filter: grayscale(0%); }
+    .tech-content { padding: 2rem; }
+    .tech-head { font-size: 1.3rem; color: white; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .tech-desc { color: #888; font-size: 0.9rem; line-height: 1.6; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div style="background: #0b0c10; padding: 4rem 2rem;">
+        <div style="font-size: 2rem; color: white; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 1rem; margin-bottom: 2rem;">CORE CAPABILITIES</div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+            
+            <div class="tech-card">
+                <img src="{src_3d}" class="tech-img">
+                <div class="tech-content">
+                    <div class="tech-head">INSTANT CLASH DETECTION</div>
+                    <div class="tech-desc">Identify spatial conflicts between MEP systems and Structural elements before they reach the jobsite.</div>
+                </div>
+            </div>
+
+            <div class="tech-card">
+                <img src="{src_vision}" class="tech-img">
+                <div class="tech-content">
+                    <div class="tech-head">COMPUTER VISION AI</div>
+                    <div class="tech-desc">Automated analysis of 2D PDF sets. Our engine reads plans with the context of a Lead Superintendent.</div>
+                </div>
+            </div>
+
+            <div class="tech-card">
+                <img src="{src_procore}" class="tech-img" style="object-fit: contain; padding: 20px; background: #fff;">
+                <div class="tech-content">
+                    <div class="tech-head">PROCORE INTEGRATION</div>
+                    <div class="tech-desc">Seamlessly push RFIs and Observations directly to your existing Project Management suite.</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 # =========================================================
@@ -162,21 +218,21 @@ elif st.session_state.view == "LOGIN":
     st.markdown("<br><br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1, 1, 1])
     with c2:
-        st.markdown("### SYSTEM ACCESS")
+        st.markdown("### SECURE LOGIN")
         with st.form("login_form"):
-            user = st.text_input("Operator ID")
-            pw = st.text_input("Access Key", type="password")
-            submitted = st.form_submit_button("AUTHENTICATE")
+            user = st.text_input("Username")
+            pw = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("LOG IN")
             
             if submitted:
                 if login(user, pw):
-                    st.success("Identity Verified.")
+                    st.success("Access Granted.")
                     time.sleep(0.5)
                     nav_to("DASHBOARD")
                     st.rerun()
                 else:
                     st.error("Access Denied. Invalid Credentials.")
-        st.caption("Hint: admin / tectonica")
+        st.caption("Demo Access: admin / tectonica")
 
 # =========================================================
 # VIEW: DASHBOARD (SECURE AREA)
@@ -184,37 +240,31 @@ elif st.session_state.view == "LOGIN":
 elif st.session_state.view == "DASHBOARD":
     render_navbar()
     
-    # SECURITY CHECK
     if not check_auth():
-        st.warning("⚠️ UNAUTHORIZED ACCESS DETECTED")
-        st.info("Redirecting to Login...")
-        time.sleep(2)
-        nav_to("LOGIN")
-        st.rerun()
+        st.warning("⚠️ PLEASE LOG IN TO ACCESS PROJECT DATA")
+        st.button("GO TO LOGIN", on_click=lambda: nav_to("LOGIN"))
     else:
-        # Dashboard Header
         dash_c1, dash_c2 = st.columns([6, 1])
-        with dash_c1: st.title("MISSION CONTROL")
+        with dash_c1: st.title("PROJECT DASHBOARD")
         st.divider()
 
         # Core App Logic 
         if st.session_state.step == "HOME":
             c1, c2 = st.columns([1, 2])
             with c1:
-                st.write("#### ACTIVE OPERATIONS")
+                st.write("#### ACTIVE PROJECTS")
                 existing = list(st.session_state.projects.keys())
                 if existing:
-                    sel = st.selectbox("Select Mission", existing)
-                    if st.button("RESUME"): 
+                    sel = st.selectbox("Select Project", existing)
+                    if st.button("OPEN PROJECT"): 
                         if sel:
                             st.session_state.current_project = sel
                             st.session_state.step = "UPLOAD"
                             st.rerun()
-                st.write("#### NEW OPERATION")
-                new_p = st.text_input("Codename")
-                if st.button("INITIALIZE"): 
+                st.write("#### START NEW PROJECT")
+                new_p = st.text_input("Project Name")
+                if st.button("CREATE"): 
                     save_project(new_p)
-                    # Create Project Folder (Persistence)
                     proj_path = os.path.join(STORAGE_DIR, new_p)
                     if not os.path.exists(proj_path): os.makedirs(proj_path)
                     
@@ -223,100 +273,117 @@ elif st.session_state.view == "DASHBOARD":
                     st.session_state.step = "UPLOAD"
                     st.rerun()
             with c2: 
-                st.info("System Ready. Select a mission.")
+                st.info("Dashboard Ready. Select or create a project to begin.")
 
         elif st.session_state.step == "UPLOAD":
-            st.sidebar.title(f"OP: {st.session_state.current_project}")
-            if st.sidebar.button("<< ABORT"): 
+            st.sidebar.title(f"PROJECT: {st.session_state.current_project}")
+            if st.sidebar.button("<< BACK TO DASHBOARD"): 
                 st.session_state.step = "HOME"
                 st.rerun()
             
-            tab1, tab2, tab3 = st.tabs(["1. INGEST", "2. TELEMETRY", "3. LAUNCH"])
+            tab1, tab2, tab3 = st.tabs(["1. UPLOAD PLANS", "2. REVIEW DATA", "3. ANALYZE"])
             
             with tab1:
-                files = st.file_uploader("Upload Schematics", type=['pdf'], accept_multiple_files=True)
+                files = st.file_uploader("Upload PDF Sets", type=['pdf'], accept_multiple_files=True)
                 if files:
                     for f in files:
                         if st.session_state.current_project:
-                            # SAVE FILE LOCALLY (PERSISTENCE)
                             proj_path = os.path.join(STORAGE_DIR, st.session_state.current_project)
                             file_path = os.path.join(proj_path, f.name)
+                            with open(file_path, "wb") as buffer: buffer.write(f.getbuffer())
                             
-                            with open(file_path, "wb") as buffer:
-                                buffer.write(f.getbuffer())
-                            
-                            # Load into session
                             if f.name not in st.session_state.projects[st.session_state.current_project]['files']:
                                 st.session_state.projects[st.session_state.current_project]['files'][f.name] = {
                                     'image': pdf_page_to_image(f), 
                                     'scale': "Unknown", 'discipline': "Unassigned", 'type': 'sheet', 'parent': None, 'needs_crop': False
                                 }
-                    st.success("Payload Integrated & Persisted to Secure Storage.")
+                    st.success("Documents successfully uploaded and saved.")
 
             with tab2:
                 p_files = st.session_state.projects[st.session_state.current_project]['files']
                 s_list = [f for f, d in p_files.items() if d['type'] == 'sheet']
                 if s_list:
-                    sel_f = st.selectbox("Select Asset", s_list)
+                    sel_f = st.selectbox("Select Drawing", s_list)
                     curr = p_files[sel_f]
                     c_i, c_d = st.columns([2, 1])
                     with c_i: st.image(curr['image'], use_column_width=True)
                     with c_d:
-                        curr['discipline'] = st.selectbox("System", ["Unassigned", "Arch", "Struct", "Mech", "Elec"], key="disc")
-                        if st.button("GENERATE SUB-ASSETS"): st.success("Sub-systems isolated.")
+                        curr['discipline'] = st.selectbox("Discipline", ["Unassigned", "Arch", "Struct", "Mech", "Elec"], key="disc")
+                        if st.button("CONFIRM METADATA"): st.success("Data Saved.")
                 else:
-                    st.info("Awaiting schematic upload for telemetry analysis.")
+                    st.info("No drawings uploaded yet.")
 
             with tab3:
                 assets = st.session_state.projects[st.session_state.current_project]['files']
                 a_list = list(assets.keys())
-                if len(a_list) < 2: st.warning("Insufficient Payload. Upload at least 2 schematics.")
+                if len(a_list) < 2: st.warning("Please upload at least 2 drawing sheets to compare.")
                 else:
                     c1, c2 = st.columns(2)
                     with c1: 
-                        b = st.selectbox("Primary Stage", a_list, key="base")
+                        b = st.selectbox("Base Layer (e.g. Architectural)", a_list, key="base")
                         st.image(assets[b]['image'], use_column_width=True)
                     with c2: 
-                        o = st.selectbox("Secondary Stage", [a for a in a_list if a != b], key="over") 
+                        o = st.selectbox("Overlay Layer (e.g. Mechanical)", [a for a in a_list if a != b], key="over") 
                         if o: st.image(assets[o]['image'], use_column_width=True)
                     
-                    if o and st.button("INITIATE SEQUENCE", type="primary"):
-                        with st.spinner("Calculating Trajectory..."):
+                    if o and st.button("RUN CLASH DETECTION", type="primary"):
+                        with st.spinner("Analyzing geometry overlaps..."):
                             res, data = detect_clashes_with_boxes(assets[b]['image'], "1:100", assets[b]['discipline'], assets[o]['discipline'])
                             st.session_state.clash_data = data
-                            st.image(res, caption="Impact Detected")
+                            st.image(res, caption="Clash Detection Results")
                     
-                    # PDF EXPORT (Step 2)
                     if st.session_state.clash_data:
                         st.divider()
-                        st.markdown("### MISSION REPORT")
-                        if st.button("📄 GENERATE PDF DOSSIER"):
+                        st.markdown("### CLASH REPORT")
+                        if st.button("📄 DOWNLOAD PDF REPORT"):
                             pdf_file = generate_pdf_report(st.session_state.current_project, st.session_state.clash_data)
                             with open(pdf_file, "rb") as f:
-                                st.download_button("DOWNLOAD ENCRYPTED REPORT", f, file_name=pdf_file)
+                                st.download_button("DOWNLOAD PDF", f, file_name=pdf_file)
 
 # =========================================================
 # OTHER VIEWS (Content Pages)
 # =========================================================
 elif st.session_state.view == "STORY":
     render_navbar()
-    st.markdown("""<div style="max-width:800px; margin:0 auto;"><h1 style="text-align:center;">MISSION CRITICAL</h1><p>We are the operating system for the built world.</p></div>""", unsafe_allow_html=True)
+    st.markdown("""
+    <div style="max-width:800px; margin:0 auto; padding: 2rem;">
+        <h1 style="text-align:center; border-bottom: 2px solid #e60012; padding-bottom: 1rem;">OUR ORIGIN</h1>
+        <br>
+        <p style="font-size: 1.2rem; line-height: 1.8;">
+        Construction is the only industry where "Clashes" are accepted as a standard line item. 
+        We build billion-dollar structures using static 2D PDFs that haven't evolved since the 1980s.
+        </p>
+        <p style="font-size: 1.2rem; line-height: 1.8;">
+        <b>TECTONICA was founded by Builders.</b> Born from the frustration of Project Managers who saw millions of dollars wasted on rework that could have been caught by software in seconds.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 elif st.session_state.view == "REVIEWS":
     render_navbar()
-    st.title("FIELD INTELLIGENCE")
-    st.markdown("### OPERATOR REPORTS")
-    st.info("No public reports declassified at this time.")
+    st.title("CASE STUDIES")
+    st.info("Client success stories coming soon.")
 
 elif st.session_state.view == "CAREERS":
     render_navbar()
-    st.title("JOIN THE CREW")
-    st.write("No active sorties.")
+    st.title("CAREERS")
+    st.write("We are always looking for talent at the intersection of Construction and Technology.")
+    with st.expander("Senior Full Stack Engineer"):
+        st.write("San Francisco / Remote. Lead our dashboard infrastructure.")
+        st.button("Apply Now")
 
 elif st.session_state.view == "SUPPORT":
     render_navbar()
-    st.title("SYSTEM SUPPORT")
-    st.write("Contact Command: support@tectonica.ai")
+    st.title("SUPPORT CENTER")
+    st.write("Email us at: support@tectonica.ai")
+
+elif st.session_state.view == "PRICING":
+    render_navbar()
+    st.title("PRICING PLANS")
+    c1, c2, c3 = st.columns(3)
+    with c1: st.markdown("### STARTER\nFree for 1 Project"); st.button("Select Starter", on_click=lambda: nav_to("LOGIN"))
+    with c2: st.markdown("### PROFESSIONAL\n$49/mo"); st.button("Select Pro", on_click=lambda: nav_to("LOGIN"))
+    with c3: st.markdown("### ENTERPRISE\nCustom"); st.button("Contact Sales")
 
 # FOOTER
-st.markdown('<div class="footer">TECTONICA AEROSPACE & CONSTRUCTION INDUSTRIES<br>USA • NZ • LEO</div>', unsafe_allow_html=True)
+st.markdown('<div class="footer">TECTONICA CONSTRUCTION TECHNOLOGIES INC.<br>New York • San Francisco • Austin</div>', unsafe_allow_html=True)
