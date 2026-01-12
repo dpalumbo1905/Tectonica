@@ -16,9 +16,19 @@ def get_img_as_base64(file_path):
     with open(file_path, "rb") as f: data = f.read()
     return f"data:image/{file_path.split('.')[-1]};base64,{base64.b64encode(data).decode()}"
 
-# --- 3. SESSION STATE ---
+# --- 3. SESSION STATE & DUMMY DATA SEEDING ---
 if 'view' not in st.session_state: st.session_state.view = "LANDING"
-if 'projects' not in st.session_state: st.session_state.projects = {} 
+if 'projects' not in st.session_state: 
+    # SEEDING DUMMY PROJECTS FOR DEMO
+    st.session_state.projects = {
+        "HUDSON YARDS TOWER A": {'files': {}},
+        "TESLA GIGAFACTORY TX": {'files': {}},
+        "BURJ KHALIFA RETROFIT": {'files': {}}
+    }
+    # Ensure these are saved to DB too for consistency
+    for p in ["HUDSON YARDS TOWER A", "TESLA GIGAFACTORY TX", "BURJ KHALIFA RETROFIT"]:
+        save_project(p)
+
 if 'current_project' not in st.session_state: st.session_state.current_project = None
 if 'step' not in st.session_state: st.session_state.step = "HOME"
 if 'chat_history' not in st.session_state: st.session_state.chat_history = []
@@ -36,19 +46,26 @@ def render_navbar():
         padding: 1rem 2rem; background: rgba(0,0,0,0.8); border-bottom: 1px solid #333;
         margin-bottom: 2rem;
     }
-    .nav-left { display: flex; align-items: center; gap: 20px; }
-    .nav-right { display: flex; gap: 15px; }
+    /* Logo Button Styling */
+    .logo-btn button {
+        background: transparent !important; border: none !important; padding: 0 !important;
+    }
+    .logo-btn img {
+        cursor: pointer; transition: transform 0.3s;
+    }
+    .logo-btn img:hover {
+        transform: scale(1.05);
+    }
     
-    /* NAV BUTTONS */
+    /* Nav Links */
     div.stButton > button {
         background: transparent; border: none; color: #ccc; 
         font-family: 'Barlow', sans-serif; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;
         margin: 0; padding: 0.5rem 1rem; transition: 0.3s;
     }
     div.stButton > button:hover { color: white; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
-    div.stButton > button:focus { border: none; outline: none; box-shadow: none; color: #e60012; }
     
-    /* SPECIAL 'LOGIN' BUTTON */
+    /* Highlight 'Login' */
     .login-btn > button { border: 1px solid #e60012 !important; color: #e60012 !important; border-radius: 4px; }
     .login-btn > button:hover { background: #e60012 !important; color: white !important; }
     </style>
@@ -56,9 +73,11 @@ def render_navbar():
 
     c1, c2, c3, c4, c5, c6, c7 = st.columns([2, 1, 1, 1, 1, 1, 1])
     
+    # LOGO (CLICKABLE HOME BUTTON)
     with c1:
-        if os.path.exists("logo.png"): st.image("logo.png", width=140)
-        else: st.markdown("### TECTONICA")
+        if st.button("TECTONICA", key="home_logo_btn"):
+            nav_to("LANDING")
+            st.rerun()
     
     # NAVIGATION LINKS
     with c2: st.button("STORY", on_click=lambda: nav_to("STORY"))
@@ -67,14 +86,14 @@ def render_navbar():
     with c5: st.button("SUPPORT", on_click=lambda: nav_to("SUPPORT"))
     with c6: st.button("MY PROJECTS", on_click=lambda: nav_to("DASHBOARD"))
     
-    # LOGIN / SIGNUP
+    # LOGIN
     with c7: 
         st.markdown('<div class="login-btn">', unsafe_allow_html=True)
         st.button("ACCESS / SIGN UP", on_click=lambda: nav_to("PRICING"))
         st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
-# GLOBAL STYLES (FONTS & BASICS)
+# GLOBAL STYLES
 # =========================================================
 st.markdown("""
 <style>
@@ -92,14 +111,17 @@ h1, h2, h3 { font-family: 'Barlow', sans-serif; text-transform: uppercase; color
 if st.session_state.view == "LANDING":
     render_navbar()
     
-    # VIDEO BACKGROUND SPECIFIC TO LANDING
+    # VIDEO BACKGROUND (FIXED AUTOPLAY)
     video_url = "https://videos.pexels.com/video-files/3129957/3129957-uhd_2560_1440_25fps.mp4"
     st.markdown(f"""
     <style>
     #myVideo {{ position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; z-index: -1; opacity: 0.5; filter: grayscale(100%) contrast(1.2); }}
     .overlay {{ position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,1) 100%); z-index: 0; pointer-events: none; }}
     </style>
-    <video autoplay muted loop id="myVideo"><source src="{video_url}" type="video/mp4"></video><div class="overlay"></div>
+    <video autoplay muted loop playsinline id="myVideo">
+        <source src="{video_url}" type="video/mp4">
+    </video>
+    <div class="overlay"></div>
     """, unsafe_allow_html=True)
 
     st.markdown("<br><br>", unsafe_allow_html=True)
@@ -196,23 +218,14 @@ elif st.session_state.view == "SUPPORT":
             
     with tab_chat:
         st.markdown("### TECTONICA SUPPORT AGENT (BETA)")
-        
-        # Display chat history
         for msg in st.session_state.chat_history:
-            with st.chat_message(msg["role"]):
-                st.write(msg["content"])
-                
-        # Chat Input
+            with st.chat_message(msg["role"]): st.write(msg["content"])
         if prompt := st.chat_input("Ask about features, pricing, or bugs..."):
             st.session_state.chat_history.append({"role": "user", "content": prompt})
             with st.chat_message("user"): st.write(prompt)
-            
-            # Simple Dummy Response Logic
-            time.sleep(1) # Simulate thinking
+            time.sleep(1) 
             response = "I am a demo agent. Please contact support@tectonica.ai for complex queries."
             if "price" in prompt.lower(): response = "We offer Free, Pro ($49/mo), and Enterprise tiers."
-            if "upload" in prompt.lower(): response = "You can upload PDF sets in the Dashboard. We support vector and raster PDFs."
-            
             st.session_state.chat_history.append({"role": "assistant", "content": response})
             with st.chat_message("assistant"): st.write(response)
 
@@ -228,50 +241,22 @@ elif st.session_state.view == "SUPPORT":
 elif st.session_state.view == "PRICING":
     render_navbar()
     st.title("SELECT MISSION PROFILE")
-    
     c1, c2, c3 = st.columns(3)
-    
     with c1:
-        st.markdown("""
-        <div style="border:1px solid #333; padding:20px; border-radius:10px; text-align:center;">
-            <h2>SCOUT</h2>
-            <h1>FREE</h1>
-            <p>1 Project</p>
-            <p>Basic Clash Detection</p>
-            <p>Community Support</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("""<div style="border:1px solid #333; padding:20px; border-radius:10px; text-align:center;"><h2>SCOUT</h2><h1>FREE</h1><p>1 Project</p><p>Basic Clash Detection</p></div>""", unsafe_allow_html=True)
         if st.button("LAUNCH SCOUT"): nav_to("DASHBOARD")
-        
     with c2:
-        st.markdown("""
-        <div style="border:1px solid #e60012; padding:20px; border-radius:10px; text-align:center; background:rgba(230,0,18,0.1);">
-            <h2 style="color:#e60012">COMMANDER</h2>
-            <h1>$49<span style="font-size:1rem">/mo</span></h1>
-            <p>Unlimited Projects</p>
-            <p>Vision AI Enabled</p>
-            <p>Priority Support</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("""<div style="border:1px solid #e60012; padding:20px; border-radius:10px; text-align:center; background:rgba(230,0,18,0.1);"><h2 style="color:#e60012">COMMANDER</h2><h1>$49<span style="font-size:1rem">/mo</span></h1><p>Unlimited Projects</p><p>Vision AI Enabled</p></div>""", unsafe_allow_html=True)
         if st.button("LAUNCH COMMANDER", type="primary"): nav_to("DASHBOARD")
-        
     with c3:
-        st.markdown("""
-        <div style="border:1px solid #333; padding:20px; border-radius:10px; text-align:center;">
-            <h2>ENTERPRISE</h2>
-            <h1>CUSTOM</h1>
-            <p>Procore Integration</p>
-            <p>On-Premise Deployment</p>
-            <p>Dedicated Engineer</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("""<div style="border:1px solid #333; padding:20px; border-radius:10px; text-align:center;"><h2>ENTERPRISE</h2><h1>CUSTOM</h1><p>Procore Integration</p><p>On-Premise Deployment</p></div>""", unsafe_allow_html=True)
         st.button("CONTACT SALES")
 
 # =========================================================
 # VIEW: DASHBOARD (The App)
 # =========================================================
 elif st.session_state.view == "DASHBOARD":
-    render_navbar() # Navbar persists even in dashboard
+    render_navbar()
     
     # Dashboard Header
     dash_c1, dash_c2 = st.columns([6, 1])
@@ -284,7 +269,8 @@ elif st.session_state.view == "DASHBOARD":
         c1, c2 = st.columns([1, 2])
         with c1:
             st.write("#### ACTIVE OPERATIONS")
-            existing = get_projects()
+            # --- UPDATED TO USE SESSION STATE DUMMY DATA ---
+            existing = list(st.session_state.projects.keys())
             if existing:
                 sel = st.selectbox("Select Mission", existing)
                 if st.button("RESUME"): 
@@ -329,11 +315,13 @@ elif st.session_state.view == "DASHBOARD":
                 with c_d:
                     curr['discipline'] = st.selectbox("System", ["Unassigned", "Arch", "Struct", "Mech", "Elec"], key="disc")
                     if st.button("GENERATE SUB-ASSETS"): st.success("Sub-systems isolated.")
+            else:
+                st.info("Awaiting schematic upload for telemetry analysis.")
 
         with tab3:
             assets = st.session_state.projects[st.session_state.current_project]['files']
             a_list = list(assets.keys())
-            if len(a_list) < 2: st.warning("Insufficient Payload.")
+            if len(a_list) < 2: st.warning("Insufficient Payload. Upload at least 2 schematics.")
             else:
                 c1, c2 = st.columns(2)
                 with c1: 
@@ -350,5 +338,5 @@ elif st.session_state.view == "DASHBOARD":
                         st.session_state.clash_data = data
                         st.image(res, caption="Impact Detected")
 
-# FOOTER (On all pages)
+# FOOTER
 st.markdown('<div class="footer">TECTONICA AEROSPACE & CONSTRUCTION INDUSTRIES<br>USA • NZ • LEO</div>', unsafe_allow_html=True)
