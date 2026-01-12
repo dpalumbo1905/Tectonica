@@ -85,14 +85,48 @@ def nav_to(page): st.session_state.view = page
 def render_navbar():
     st.markdown("""
     <style>
-    .nav-container { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: rgba(0,0,0,0.8); border-bottom: 1px solid #333; margin-bottom: 2rem; }
-    div.stButton > button { background: transparent; border: none; color: #ccc; font-family: 'Barlow', sans-serif; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin: 0; padding: 0.5rem 1rem; transition: 0.3s; }
-    div.stButton > button:hover { color: white; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
-    .login-btn > button { border: 1px solid #e60012 !important; color: #e60012 !important; border-radius: 4px; }
-    .login-btn > button:hover { background: #e60012 !important; color: white !important; }
+    /* 1. THE GRAY BAR: Lighter, solid background for visibility */
+    .nav-container { 
+        display: flex; justify-content: space-between; align-items: center; 
+        padding: 1rem 2rem; 
+        background: #262626; /* Solid Gunmetal Gray */
+        border-bottom: 1px solid #444; 
+        margin-bottom: 2rem; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+
+    /* 2. BUTTON TEXT: Pure White */
+    div.stButton > button { 
+        background: transparent; border: none; 
+        color: #ffffff !important; /* Force White */
+        font-family: 'Barlow', sans-serif; font-size: 0.95rem; font-weight: 600;
+        text-transform: uppercase; letter-spacing: 1px; 
+        margin: 0; padding: 0.5rem 1rem; transition: 0.3s;
+    }
+    
+    div.stButton > button:hover { 
+        color: #e60012 !important; 
+        background: rgba(255,255,255,0.05); /* Subtle hover highlight */
+    }
+
+    /* 3. ALIGNMENT FIX: Target the LAST button (Login/Logout) specifically */
+    /* We assume the last button in the row is the Login/Logout button */
+    [data-testid="column"]:last-child div.stButton > button {
+        border: 1px solid #e60012 !important; 
+        border-radius: 4px;
+        color: #e60012 !important;
+    }
+    
+    [data-testid="column"]:last-child div.stButton > button:hover {
+        background: #e60012 !important;
+        color: white !important;
+    }
     </style>
     """, unsafe_allow_html=True)
+    
+    # We use a single container for alignment, relying on columns
     c1, c2, c3, c4, c5, c6, c7 = st.columns([2, 1, 1, 1, 1, 1, 1])
+    
     with c1: 
         if st.button("TECTONICA", key="home_btn"): nav_to("LANDING"); st.rerun()
     with c2: st.button("OUR STORY", on_click=lambda: nav_to("STORY"))
@@ -100,11 +134,11 @@ def render_navbar():
     with c4: st.button("CAREERS", on_click=lambda: nav_to("CAREERS"))
     with c5: st.button("SUPPORT", on_click=lambda: nav_to("SUPPORT"))
     with c6: st.button("MY PROJECTS", on_click=lambda: nav_to("DASHBOARD"))
+    
+    # LOGOUT / LOGIN (No extra div wrapper, fixing alignment)
     with c7: 
-        st.markdown('<div class="login-btn">', unsafe_allow_html=True)
         if check_auth(): st.button("LOGOUT", on_click=logout)
-        else: st.button("LOGIN / SIGN UP", on_click=lambda: nav_to("LOGIN"))
-        st.markdown('</div>', unsafe_allow_html=True)
+        else: st.button("LOGIN", on_click=lambda: nav_to("LOGIN"))
 
 # =========================================================
 # GLOBAL STYLES
@@ -150,7 +184,6 @@ if st.session_state.view == "LANDING":
     src_procore = get_img_as_base64("card_procore.png")
     src_vision = "https://images.pexels.com/photos/2760241/pexels-photo-2760241.jpeg?auto=compress&cs=tinysrgb&w=800"
 
-    # --- HTML BLOCK (NO INDENTATION TO FIX RENDERING) ---
     st.markdown(f"""
 <div style="background: #0b0c10; padding: 4rem 2rem;">
 <div style="font-size: 2rem; color: white; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 1rem; margin-bottom: 2rem;">CORE CAPABILITIES</div>
