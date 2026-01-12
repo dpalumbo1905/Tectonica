@@ -73,10 +73,19 @@ def get_img_as_base64(file_path):
 
 # --- 5. SESSION STATE ---
 if 'view' not in st.session_state: st.session_state.view = "LANDING"
-if 'projects' not in st.session_state: st.session_state.projects = {} 
+if 'projects' not in st.session_state: 
+    # PRE-SEEDING NAPLES AOB PROJECT
+    st.session_state.projects = {
+        "NAPLES AIRPORT AOB": {'files': {}},
+        "HUDSON YARDS TOWER A": {'files': {}},
+        "TESLA GIGAFACTORY TX": {'files': {}}
+    }
+    for p in st.session_state.projects.keys(): save_project(p)
+
 if 'current_project' not in st.session_state: st.session_state.current_project = None
 if 'step' not in st.session_state: st.session_state.step = "HOME"
 if 'chat_history' not in st.session_state: st.session_state.chat_history = []
+if 'show_vision_demo' not in st.session_state: st.session_state.show_vision_demo = False
 
 # --- 6. NAVIGATION CONTROLLER ---
 def nav_to(page): st.session_state.view = page
@@ -85,48 +94,14 @@ def nav_to(page): st.session_state.view = page
 def render_navbar():
     st.markdown("""
     <style>
-    /* 1. THE GRAY BAR: Lighter, solid background for visibility */
-    .nav-container { 
-        display: flex; justify-content: space-between; align-items: center; 
-        padding: 1rem 2rem; 
-        background: #262626; /* Solid Gunmetal Gray */
-        border-bottom: 1px solid #444; 
-        margin-bottom: 2rem; 
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    }
-
-    /* 2. BUTTON TEXT: Pure White */
-    div.stButton > button { 
-        background: transparent; border: none; 
-        color: #ffffff !important; /* Force White */
-        font-family: 'Barlow', sans-serif; font-size: 0.95rem; font-weight: 600;
-        text-transform: uppercase; letter-spacing: 1px; 
-        margin: 0; padding: 0.5rem 1rem; transition: 0.3s;
-    }
-    
-    div.stButton > button:hover { 
-        color: #e60012 !important; 
-        background: rgba(255,255,255,0.05); /* Subtle hover highlight */
-    }
-
-    /* 3. ALIGNMENT FIX: Target the LAST button (Login/Logout) specifically */
-    /* We assume the last button in the row is the Login/Logout button */
-    [data-testid="column"]:last-child div.stButton > button {
-        border: 1px solid #e60012 !important; 
-        border-radius: 4px;
-        color: #e60012 !important;
-    }
-    
-    [data-testid="column"]:last-child div.stButton > button:hover {
-        background: #e60012 !important;
-        color: white !important;
-    }
+    .nav-container { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: #262626; border-bottom: 1px solid #444; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+    div.stButton > button { background: transparent; border: none; color: #ffffff !important; font-family: 'Barlow', sans-serif; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0; padding: 0.5rem 1rem; transition: 0.3s; }
+    div.stButton > button:hover { color: #e60012 !important; background: rgba(255,255,255,0.05); }
+    [data-testid="column"]:last-child div.stButton > button { border: 1px solid #e60012 !important; border-radius: 4px; color: #e60012 !important; }
+    [data-testid="column"]:last-child div.stButton > button:hover { background: #e60012 !important; color: white !important; }
     </style>
     """, unsafe_allow_html=True)
-    
-    # We use a single container for alignment, relying on columns
     c1, c2, c3, c4, c5, c6, c7 = st.columns([2, 1, 1, 1, 1, 1, 1])
-    
     with c1: 
         if st.button("TECTONICA", key="home_btn"): nav_to("LANDING"); st.rerun()
     with c2: st.button("OUR STORY", on_click=lambda: nav_to("STORY"))
@@ -134,8 +109,6 @@ def render_navbar():
     with c4: st.button("CAREERS", on_click=lambda: nav_to("CAREERS"))
     with c5: st.button("SUPPORT", on_click=lambda: nav_to("SUPPORT"))
     with c6: st.button("MY PROJECTS", on_click=lambda: nav_to("DASHBOARD"))
-    
-    # LOGOUT / LOGIN (No extra div wrapper, fixing alignment)
     with c7: 
         if check_auth(): st.button("LOGOUT", on_click=logout)
         else: st.button("LOGIN", on_click=lambda: nav_to("LOGIN"))
@@ -149,13 +122,9 @@ st.markdown("""
 .stApp { background-color: #0b0c10; font-family: 'Barlow', sans-serif; color: #e0e0e0; }
 h1, h2, h3 { font-family: 'Barlow', sans-serif; text-transform: uppercase; color: white; }
 .footer { margin-top: 5rem; padding: 2rem; border-top: 1px solid #333; text-align: center; color: #555; font-size: 0.8rem; }
-.tech-card { background: #111; border: 1px solid #333; transition: all 0.3s ease; overflow: hidden; height: 100%; }
-.tech-card:hover { border-color: #e60012; transform: translateY(-5px); }
-.tech-img { width: 100%; height: 250px; object-fit: cover; filter: grayscale(100%); transition: 0.4s; }
-.tech-card:hover .tech-img { filter: grayscale(0%); }
-.tech-content { padding: 2rem; }
-.tech-head { font-size: 1.3rem; color: white; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; }
-.tech-desc { color: #888; font-size: 0.9rem; line-height: 1.6; }
+/* Card Styles for Streamlit Columns */
+.css-1r6slb0 { border: 1px solid #333; border-radius: 10px; padding: 20px; background: #111; transition: 0.3s; }
+.css-1r6slb0:hover { border-color: #e60012; transform: translateY(-5px); }
 </style>
 """, unsafe_allow_html=True)
 
@@ -164,15 +133,32 @@ h1, h2, h3 { font-family: 'Barlow', sans-serif; text-transform: uppercase; color
 # =========================================================
 if st.session_state.view == "LANDING":
     render_navbar()
+    
+    # 1. VIDEO BACKGROUND (Reinforced)
+    # Using a reliable Pexels link. Muted/Autoplay mandatory for background.
     video_url = "https://videos.pexels.com/video-files/3129957/3129957-uhd_2560_1440_25fps.mp4"
     st.markdown(f"""
     <style>
-    #myVideo {{ position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; z-index: -1; opacity: 0.5; filter: grayscale(100%) contrast(1.2); }}
-    .overlay {{ position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,1) 100%); z-index: 0; pointer-events: none; }}
+    [data-testid="stAppViewContainer"] > .main {{
+        background: transparent;
+    }}
+    #myVideo {{
+        position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; z-index: -99;
+        opacity: 0.5; filter: grayscale(100%) contrast(1.2); object-fit: cover;
+    }}
+    .overlay {{
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,1) 100%);
+        z-index: -98; pointer-events: none;
+    }}
     </style>
-    <video autoplay muted loop playsinline id="myVideo"><source src="{video_url}" type="video/mp4"></video><div class="overlay"></div>
+    <video autoplay muted loop playsinline id="myVideo">
+        <source src="{video_url}" type="video/mp4">
+    </video>
+    <div class="overlay"></div>
     """, unsafe_allow_html=True)
 
+    # 2. HERO SECTION
     st.markdown("<br><br>", unsafe_allow_html=True)
     c1, c2 = st.columns([2, 1])
     with c1:
@@ -180,42 +166,45 @@ if st.session_state.view == "LANDING":
         st.button("ENTER PLATFORM ➤", type="primary", on_click=lambda: nav_to("LOGIN"))
         
     st.markdown("<br><br><br>", unsafe_allow_html=True)
-    src_3d = get_img_as_base64("card_3d.jpg")
-    src_procore = get_img_as_base64("card_procore.png")
-    src_vision = "https://images.pexels.com/photos/2760241/pexels-photo-2760241.jpeg?auto=compress&cs=tinysrgb&w=800"
+    
+    # 3. INTERACTIVE FEATURE GRID (Using Streamlit Columns for logic)
+    st.markdown('<div style="background: #0b0c10; padding: 3rem; border-radius: 12px; border: 1px solid #222;">', unsafe_allow_html=True)
+    st.markdown("### CORE CAPABILITIES")
+    st.markdown("---")
+    
+    fc1, fc2, fc3 = st.columns(3)
+    
+    # -- CARD 1: INSTANT CLASH --
+    with fc1:
+        st.image("card_3d.jpg" if os.path.exists("card_3d.jpg") else "https://images.pexels.com/photos/834892/pexels-photo-834892.jpeg", use_column_width=True)
+        st.markdown("#### INSTANT CLASH")
+        st.caption("Identify spatial conflicts between MEP systems and Structural elements instantly.")
+    
+    # -- CARD 2: VISION AI (INTERACTIVE) --
+    with fc2:
+        # State Toggle Logic
+        if st.session_state.show_vision_demo:
+            # Play AI Video
+            st.video("https://videos.pexels.com/video-files/8524225/8524225-hd_1920_1080_30fps.mp4", autoplay=True, muted=True)
+            if st.button("❌ Close Demo"):
+                st.session_state.show_vision_demo = False
+                st.rerun()
+        else:
+            # Show Static Image
+            st.image("https://images.pexels.com/photos/2760241/pexels-photo-2760241.jpeg", use_column_width=True)
+            st.markdown("#### COMPUTER VISION AI")
+            st.caption("Our engine reads 2D PDF sets with the context of a Lead Superintendent.")
+            if st.button("▶ WATCH DEMO"):
+                st.session_state.show_vision_demo = True
+                st.rerun()
 
-    st.markdown(f"""
-<div style="background: #0b0c10; padding: 4rem 2rem;">
-<div style="font-size: 2rem; color: white; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 1rem; margin-bottom: 2rem;">CORE CAPABILITIES</div>
-<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
-
-<div class="tech-card">
-<img src="{src_3d}" class="tech-img">
-<div class="tech-content">
-<div class="tech-head">INSTANT CLASH DETECTION</div>
-<div class="tech-desc">Identify spatial conflicts between MEP systems and Structural elements before they reach the jobsite.</div>
-</div>
-</div>
-
-<div class="tech-card">
-<img src="{src_vision}" class="tech-img">
-<div class="tech-content">
-<div class="tech-head">COMPUTER VISION AI</div>
-<div class="tech-desc">Automated analysis of 2D PDF sets. Our engine reads plans with the context of a Lead Superintendent.</div>
-</div>
-</div>
-
-<div class="tech-card">
-<img src="{src_procore}" class="tech-img" style="object-fit: contain; padding: 20px; background: #fff;">
-<div class="tech-content">
-<div class="tech-head">PROCORE INTEGRATION</div>
-<div class="tech-desc">Seamlessly push RFIs and Observations directly to your existing Project Management suite.</div>
-</div>
-</div>
-
-</div>
-</div>
-""", unsafe_allow_html=True)
+    # -- CARD 3: PROCORE --
+    with fc3:
+        st.image("card_procore.png" if os.path.exists("card_procore.png") else "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Procore_Logo.svg/512px-Procore_Logo.svg.png", use_column_width=True)
+        st.markdown("#### PROCORE SYNC")
+        st.caption("Seamlessly push RFIs and Observations directly to your existing Project Management suite.")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
 # VIEW: LOGIN
@@ -258,7 +247,7 @@ elif st.session_state.view == "DASHBOARD":
                 st.write("#### ACTIVE PROJECTS")
                 existing = list(st.session_state.projects.keys())
                 if existing:
-                    sel = st.selectbox("Select Project", existing)
+                    sel = st.selectbox("Select Project", existing, index=0) # Default to Naples if available
                     if st.button("OPEN PROJECT"): 
                         if sel:
                             st.session_state.current_project = sel
@@ -274,7 +263,13 @@ elif st.session_state.view == "DASHBOARD":
                     st.session_state.current_project = new_p
                     st.session_state.step = "UPLOAD"
                     st.rerun()
-            with c2: st.info("Dashboard Ready.")
+            with c2: 
+                st.info("Dashboard Ready.")
+                st.markdown("---")
+                st.markdown("#### 📥 DEMO RESOURCES")
+                st.write("Don't have a PDF set?")
+                st.link_button("Download Naples AOB Drawings (PDF)", "https://www.flynaples.com/wp-content/uploads/2022-02-28-NAPLES-AOB-CONSTRUCTION-DRAWINGS.pdf")
+                st.caption("Download this file, then upload it in the next step to test the system.")
 
         elif st.session_state.step == "UPLOAD":
             st.sidebar.title(f"PROJECT: {st.session_state.current_project}")
@@ -285,11 +280,13 @@ elif st.session_state.view == "DASHBOARD":
             tab1, tab2, tab3 = st.tabs(["1. UPLOAD PLANS", "2. REVIEW DATA", "3. ANALYZE"])
             
             with tab1:
+                st.info(f"Uploading to: {st.session_state.current_project}")
                 files = st.file_uploader("Upload PDF Sets", type=['pdf'], accept_multiple_files=True)
                 if files:
                     for f in files:
                         if st.session_state.current_project:
                             proj_path = os.path.join(STORAGE_DIR, st.session_state.current_project)
+                            if not os.path.exists(proj_path): os.makedirs(proj_path)
                             file_path = os.path.join(proj_path, f.name)
                             with open(file_path, "wb") as buffer: buffer.write(f.getbuffer())
                             if f.name not in st.session_state.projects[st.session_state.current_project]['files']:
