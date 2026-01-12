@@ -74,11 +74,11 @@ def get_img_as_base64(file_path):
 # --- 5. SESSION STATE ---
 if 'view' not in st.session_state: st.session_state.view = "LANDING"
 if 'projects' not in st.session_state: 
-    # PRE-SEEDING NAPLES AOB PROJECT
+    # PRE-SEEDING DEMO PROJECTS
     st.session_state.projects = {
-        "NAPLES AIRPORT AOB": {'files': {}},
-        "HUDSON YARDS TOWER A": {'files': {}},
-        "TESLA GIGAFACTORY TX": {'files': {}}
+        "NAPLES AIRPORT AOB (COMMERCIAL)": {'files': {}},
+        "SANIBEL FIRE STATION (INSTITUTIONAL)": {'files': {}},
+        "TOWNE PLACE SUITES (HOSPITALITY)": {'files': {}}
     }
     for p in st.session_state.projects.keys(): save_project(p)
 
@@ -122,7 +122,6 @@ st.markdown("""
 .stApp { background-color: #0b0c10; font-family: 'Barlow', sans-serif; color: #e0e0e0; }
 h1, h2, h3 { font-family: 'Barlow', sans-serif; text-transform: uppercase; color: white; }
 .footer { margin-top: 5rem; padding: 2rem; border-top: 1px solid #333; text-align: center; color: #555; font-size: 0.8rem; }
-/* Card Styles for Streamlit Columns */
 .css-1r6slb0 { border: 1px solid #333; border-radius: 10px; padding: 20px; background: #111; transition: 0.3s; }
 .css-1r6slb0:hover { border-color: #e60012; transform: translateY(-5px); }
 </style>
@@ -134,31 +133,16 @@ h1, h2, h3 { font-family: 'Barlow', sans-serif; text-transform: uppercase; color
 if st.session_state.view == "LANDING":
     render_navbar()
     
-    # 1. VIDEO BACKGROUND (Reinforced)
-    # Using a reliable Pexels link. Muted/Autoplay mandatory for background.
     video_url = "https://videos.pexels.com/video-files/3129957/3129957-uhd_2560_1440_25fps.mp4"
     st.markdown(f"""
     <style>
-    [data-testid="stAppViewContainer"] > .main {{
-        background: transparent;
-    }}
-    #myVideo {{
-        position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; z-index: -99;
-        opacity: 0.5; filter: grayscale(100%) contrast(1.2); object-fit: cover;
-    }}
-    .overlay {{
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,1) 100%);
-        z-index: -98; pointer-events: none;
-    }}
+    [data-testid="stAppViewContainer"] > .main {{ background: transparent; }}
+    #myVideo {{ position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; z-index: -99; opacity: 0.5; filter: grayscale(100%) contrast(1.2); object-fit: cover; }}
+    .overlay {{ position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,1) 100%); z-index: -98; pointer-events: none; }}
     </style>
-    <video autoplay muted loop playsinline id="myVideo">
-        <source src="{video_url}" type="video/mp4">
-    </video>
-    <div class="overlay"></div>
+    <video autoplay muted loop playsinline id="myVideo"><source src="{video_url}" type="video/mp4"></video><div class="overlay"></div>
     """, unsafe_allow_html=True)
 
-    # 2. HERO SECTION
     st.markdown("<br><br>", unsafe_allow_html=True)
     c1, c2 = st.columns([2, 1])
     with c1:
@@ -166,44 +150,30 @@ if st.session_state.view == "LANDING":
         st.button("ENTER PLATFORM ➤", type="primary", on_click=lambda: nav_to("LOGIN"))
         
     st.markdown("<br><br><br>", unsafe_allow_html=True)
-    
-    # 3. INTERACTIVE FEATURE GRID (Using Streamlit Columns for logic)
     st.markdown('<div style="background: #0b0c10; padding: 3rem; border-radius: 12px; border: 1px solid #222;">', unsafe_allow_html=True)
     st.markdown("### CORE CAPABILITIES")
     st.markdown("---")
     
     fc1, fc2, fc3 = st.columns(3)
-    
-    # -- CARD 1: INSTANT CLASH --
     with fc1:
         st.image("card_3d.jpg" if os.path.exists("card_3d.jpg") else "https://images.pexels.com/photos/834892/pexels-photo-834892.jpeg", use_column_width=True)
         st.markdown("#### INSTANT CLASH")
         st.caption("Identify spatial conflicts between MEP systems and Structural elements instantly.")
     
-    # -- CARD 2: VISION AI (INTERACTIVE) --
     with fc2:
-        # State Toggle Logic
         if st.session_state.show_vision_demo:
-            # Play AI Video
             st.video("https://videos.pexels.com/video-files/8524225/8524225-hd_1920_1080_30fps.mp4", autoplay=True, muted=True)
-            if st.button("❌ Close Demo"):
-                st.session_state.show_vision_demo = False
-                st.rerun()
+            if st.button("❌ Close Demo"): st.session_state.show_vision_demo = False; st.rerun()
         else:
-            # Show Static Image
             st.image("https://images.pexels.com/photos/2760241/pexels-photo-2760241.jpeg", use_column_width=True)
             st.markdown("#### COMPUTER VISION AI")
             st.caption("Our engine reads 2D PDF sets with the context of a Lead Superintendent.")
-            if st.button("▶ WATCH DEMO"):
-                st.session_state.show_vision_demo = True
-                st.rerun()
+            if st.button("▶ WATCH DEMO"): st.session_state.show_vision_demo = True; st.rerun()
 
-    # -- CARD 3: PROCORE --
     with fc3:
         st.image("card_procore.png" if os.path.exists("card_procore.png") else "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Procore_Logo.svg/512px-Procore_Logo.svg.png", use_column_width=True)
         st.markdown("#### PROCORE SYNC")
         st.caption("Seamlessly push RFIs and Observations directly to your existing Project Management suite.")
-    
     st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
@@ -247,7 +217,7 @@ elif st.session_state.view == "DASHBOARD":
                 st.write("#### ACTIVE PROJECTS")
                 existing = list(st.session_state.projects.keys())
                 if existing:
-                    sel = st.selectbox("Select Project", existing, index=0) # Default to Naples if available
+                    sel = st.selectbox("Select Project", existing, index=0)
                     if st.button("OPEN PROJECT"): 
                         if sel:
                             st.session_state.current_project = sel
@@ -257,8 +227,6 @@ elif st.session_state.view == "DASHBOARD":
                 new_p = st.text_input("Project Name")
                 if st.button("CREATE"): 
                     save_project(new_p)
-                    proj_path = os.path.join(STORAGE_DIR, new_p)
-                    if not os.path.exists(proj_path): os.makedirs(proj_path)
                     st.session_state.projects[new_p] = {'files': {}}
                     st.session_state.current_project = new_p
                     st.session_state.step = "UPLOAD"
@@ -267,9 +235,25 @@ elif st.session_state.view == "DASHBOARD":
                 st.info("Dashboard Ready.")
                 st.markdown("---")
                 st.markdown("#### 📥 DEMO RESOURCES")
-                st.write("Don't have a PDF set?")
-                st.link_button("Download Naples AOB Drawings (PDF)", "https://www.flynaples.com/wp-content/uploads/2022-02-28-NAPLES-AOB-CONSTRUCTION-DRAWINGS.pdf")
-                st.caption("Download this file, then upload it in the next step to test the system.")
+                
+                # LINK 1: NAPLES AOB
+                st.markdown("**1. NAPLES AIRPORT AOB**")
+                st.caption("Complex Mechanical vs. Structural")
+                st.link_button("⬇ Download Naples Plans (PDF)", "https://www.flynaples.com/wp-content/uploads/2022-02-28-NAPLES-AOB-CONSTRUCTION-DRAWINGS.pdf")
+                
+                st.divider()
+                
+                # LINK 2: SANIBEL FIRE STATION
+                st.markdown("**2. SANIBEL FIRE STATION**")
+                st.caption("Institutional / Public Safety")
+                st.link_button("⬇ Download Sanibel Plans (PDF)", "https://www.sanibelfire.com/files/d6cc0d1ed/SFRD+%23172_BID+SET+-+Architectural+Set_2024.01.05.pdf")
+                
+                st.divider()
+                
+                # LINK 3: TOWNE PLACE SUITES
+                st.markdown("**3. TOWNE PLACE SUITES**")
+                st.caption("Hospitality / Multi-Unit")
+                st.link_button("⬇ Download Hotel Plans (PDF)", "https://chicoca.gov/documents/Departments/Community-Development/Planning-Division/Current-Projects/att_q_towne_place_suites_architectural_drawing_mwt_june_10_2021.pdf")
 
         elif st.session_state.step == "UPLOAD":
             st.sidebar.title(f"PROJECT: {st.session_state.current_project}")
